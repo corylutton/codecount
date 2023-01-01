@@ -33,8 +33,9 @@ import (
 	"time"
 )
 
+const VERSION = "0.2"
+
 var (
-	VERSION     = "0.2"
 	ROOT        = string(".")
 	ARG_JSON    = flag.Bool("json", false, "Output JSON")
 	ARG_VERSION = flag.Bool("v", false, "Display Version")
@@ -55,7 +56,6 @@ type File struct {
 	comments int         // Comment Lines
 	blanks   int         // Blank Lintes
 	code     int         // Code Lines
-	// hash     string      // Hash of the contents for duplicate filtering
 }
 
 type Files []File
