@@ -27,13 +27,14 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime/pprof"
 	"sort"
 	"strings"
 	"time"
 )
 
-const VERSION = "0.2"
+const VERSION = "0.3"
 
 var (
 	ROOT        = string(".")
@@ -43,6 +44,7 @@ var (
 	ARG_BYPATH  = flag.Bool("p", false, "Report by Path")
 	ARG_DEBUG   = flag.Bool("d", false, "Enable Debug output")
 	ARG_INCLUDE = flag.Bool("i", false, "Include Duplicate Files")
+	ARG_OMIT    = flag.String("omit", "", "Omit Files by Regex Match")
 	ARG_PROFILE = flag.String("cpuprofile", "", "Write cpu profile to file")
 	ARG_MEMORY  = flag.String("memprofile", "", "Write mem profile to file")
 )
@@ -133,6 +135,7 @@ const (
 )
 
 var files = []File{}
+var omitFilter *regexp.Regexp
 
 // Run the codecounter
 func main() {
@@ -162,6 +165,13 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	if *ARG_OMIT != "" {
+		var err error
+		omitFilter, err = regexp.Compile(*ARG_OMIT)
+		if err != nil {
+			log.Fatal("Omit regex failed to parse: " + err.Error())
+		}
+	}
 	// Collect the files or single file
 	filepath.Walk(ROOT, walkFunc)
 
@@ -208,6 +218,11 @@ func main() {
 
 // Create the files
 func walkFunc(path string, info os.FileInfo, err error) error {
+	if omitFilter != nil {
+		if omitFilter.MatchString(path) {
+			return nil
+		}
+	}
 	if info.IsDir() {
 		if path == "." {
 			return nil
